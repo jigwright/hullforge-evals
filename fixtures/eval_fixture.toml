@@ -1,0 +1,58 @@
+# The eval fixture: a small, deterministic scene every run starts from.
+#
+# Everything lives under /Game/EvalFixture, and every actor's label starts with
+# "Eval", so a reset can find and remove exactly what the seed made and nothing
+# else. Steps run in order. Argument names are checked against the editor's live
+# schema before each call (see evals/bridge.py), so a renamed argument fails the
+# seed loudly instead of producing a fixture that is quietly wrong.
+
+root = "/Game/EvalFixture"
+actor_label_prefix = "Eval"
+
+[[step]]
+tool = "hf_create_folder"
+args = { path = "/Game/EvalFixture/Materials" }
+
+[[step]]
+tool = "hf_create_folder"
+args = { path = "/Game/EvalFixture/Blueprints" }
+
+[[step]]
+tool = "hf_create_material"
+args = { destination = "/Game/EvalFixture/Materials/M_Rock" }
+
+[[step]]
+tool = "hf_create_material"
+args = { destination = "/Game/EvalFixture/Materials/M_Sand" }
+
+[[step]]
+tool = "hf_create_material_instance"
+args = { parent = "/Game/EvalFixture/Materials/M_Rock", destination = "/Game/EvalFixture/Materials/MI_Rock_Dry" }
+
+[[step]]
+tool = "hf_create_material_instance"
+args = { parent = "/Game/EvalFixture/Materials/M_Rock", destination = "/Game/EvalFixture/Materials/MI_Rock_Wet" }
+
+[[step]]
+tool = "hf_create_material_instance"
+args = { parent = "/Game/EvalFixture/Materials/M_Sand", destination = "/Game/EvalFixture/Materials/MI_Sand" }
+
+[[step]]
+tool = "hf_create_blueprint"
+args = { destination = "/Game/EvalFixture/Blueprints/BP_Hull", parent_class = "/Script/Engine.Actor" }
+
+[[step]]
+tool = "hf_spawn_actor"
+args = { class_path = "/Script/Engine.StaticMeshActor", label = "EvalRock_A", location = "0,0,0" }
+
+[[step]]
+tool = "hf_spawn_actor"
+args = { class_path = "/Script/Engine.StaticMeshActor", label = "EvalRock_B", location = "500,0,0" }
+
+[[step]]
+tool = "hf_spawn_actor"
+args = { class_path = "/Script/Engine.StaticMeshActor", label = "EvalRock_C", location = "1000,0,0" }
+
+[[step]]
+tool = "hf_spawn_actor"
+args = { class_path = "/Script/Engine.DirectionalLight", label = "EvalSun", location = "0,0,2000" }

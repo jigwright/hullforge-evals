@@ -1,0 +1,7 @@
+results/
+__pycache__/
+.venv/
+*.pyc
+.mcp-run-*.json
+scratch/
+uv.lock.bak
