@@ -63,8 +63,13 @@ def find_claude() -> str:
     return shutil.which("claude") or "claude"
 
 
-def mcp_config(connector_dir: Path, catalog_mode: bool, project_dir: str | None) -> dict[str, Any]:
+def mcp_config(connector_dir: Path, catalog_mode: bool, project_dir: str | None,
+               areas: list[str] | None = None) -> dict[str, Any]:
+    """areas, with catalog_mode, lists those areas from startup. Claude Code
+    reads the tool list once, so this is the form of catalog mode it can use."""
     env = {"HULLFORGE_CATALOG_MODE": "1" if catalog_mode else "0"}
+    if catalog_mode and areas is not None:
+        env["HULLFORGE_CATALOG_AREAS"] = ",".join(areas)
     if project_dir:
         env["HULLFORGE_PROJECT_DIR"] = project_dir
     return {
@@ -78,6 +83,20 @@ def mcp_config(connector_dir: Path, catalog_mode: bool, project_dir: str | None)
     }
 
 
+def agent_workdir() -> Path:
+    """An empty directory, outside any git repo, for the agent to run in.
+
+    Claude Code puts the working directory's git status and CLAUDE.md into the
+    agent's context. Run from this repo and the agent can see the task files,
+    including the names of the planted injections. A fixed path also keeps the
+    system prompt identical from run to run, so prompt caching works.
+    """
+    base = Path(os.environ.get("LOCALAPPDATA") or tempfile.gettempdir())
+    d = base / "hullforge-evals" / "agent-cwd"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
 def run_agent(
     prompt: str,
     *,
@@ -85,11 +104,12 @@ def run_agent(
     max_turns: int,
     connector_dir: Path,
     catalog_mode: bool,
+    areas: list[str] | None = None,
     project_dir: str | None = None,
     timeout_s: int = 900,
 ) -> AgentRun:
     claude = find_claude()
-    cfg = mcp_config(connector_dir, catalog_mode, project_dir)
+    cfg = mcp_config(connector_dir, catalog_mode, project_dir, areas)
     with tempfile.NamedTemporaryFile("w", suffix=".json", prefix=".mcp-run-", delete=False) as f:
         json.dump(cfg, f)
         cfg_path = f.name
@@ -109,7 +129,7 @@ def run_agent(
     try:
         proc = subprocess.run(
             cmd, capture_output=True, text=True, encoding="utf-8",
-            timeout=timeout_s, env={**os.environ},
+            timeout=timeout_s, env={**os.environ}, cwd=agent_workdir(),
         )
         stdout = proc.stdout
     except subprocess.TimeoutExpired as exc:

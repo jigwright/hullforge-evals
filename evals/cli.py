@@ -25,17 +25,28 @@ from .grading import grade
 REPO = Path(__file__).resolve().parent.parent
 DEFAULT_CONNECTOR = REPO.parent / "hullforge-mcp"
 
+# "preset" mode: catalog mode with these areas listed from startup, instead of
+# switched on mid-session. Covers every tool the core tasks need.
+DEFAULT_PRESET_AREAS = "Actors,Assets,Blueprints,Materials,Properties,Components,Lighting"
+
+
+def load_task_file(path: Path) -> tuple[list[dict], list[dict]]:
+    """A task file's tasks, and any [[seed]] steps it adds to the fixture."""
+    with path.open("rb") as f:
+        data = tomllib.load(f)
+    return data["task"], data.get("seed", [])
+
 
 def load_tasks(path: Path) -> list[dict]:
-    with path.open("rb") as f:
-        return tomllib.load(f)["task"]
+    return load_task_file(path)[0]
 
 
 async def cmd_check(args: argparse.Namespace) -> int:
     problems = 0
     async with Bridge(args.project) as b:
         print(f"editor reports {len(b.schemas)} tools")
-        for step in load_fixture()["step"]:
+        tasks, seed = load_task_file(Path(args.tasks))
+        for step in load_fixture()["step"] + seed:
             try:
                 b.check(step["tool"], step.get("args", {}))
             except SchemaMismatch as e:
@@ -49,7 +60,7 @@ async def cmd_check(args: argparse.Namespace) -> int:
             except SchemaMismatch as e:
                 problems += 1
                 print(f"RESET    {e}")
-        for task in load_tasks(Path(args.tasks)):
+        for task in tasks:
             names = [n for e in task.get("expected_tools", []) for n in e.split("|")]
             for t in names + task.get("acceptable_tools", []):
                 if t not in b.schemas:
@@ -67,14 +78,15 @@ async def cmd_check(args: argparse.Namespace) -> int:
 
 
 async def cmd_reset(args: argparse.Namespace) -> int:
+    seed = load_task_file(Path(args.tasks))[1] if args.tasks else []
     async with Bridge(args.project) as b:
-        for line in await reset(b):
+        for line in await reset(b, extra_steps=seed):
             print(line)
     return 0
 
 
 async def cmd_run(args: argparse.Namespace) -> int:
-    tasks = load_tasks(Path(args.tasks))
+    tasks, seed = load_task_file(Path(args.tasks))
     if args.only:
         tasks = [t for t in tasks if t["id"] in args.only.split(",")]
     tasks = tasks[: args.limit] if args.limit else tasks
@@ -90,13 +102,14 @@ async def cmd_run(args: argparse.Namespace) -> int:
                 for mode in modes:
                     n += 1
                     print(f"[{n}/{total}] {task['id']} mode={mode} rep={rep}", flush=True)
-                    await reset(b)
+                    await reset(b, extra_steps=seed)
                     agent = await asyncio.to_thread(
                         run_agent, task["prompt"], model=args.model, max_turns=args.max_turns,
-                        connector_dir=Path(args.connector), catalog_mode=(mode == "catalog"),
+                        connector_dir=Path(args.connector), catalog_mode=(mode in ("catalog", "preset")),
+                        areas=args.areas.split(",") if mode == "preset" else None,
                         project_dir=args.project,
                     )
-                    g = await grade(b, task["checks"], agent.answer)
+                    g = await grade(b, task["checks"], agent.answer, agent.tools_called)
                     precision, recall = tool_selection(
                         agent.tools_called, task.get("expected_tools", []), task.get("acceptable_tools", []))
                     stem = f"{task['id']}__{mode}__{rep}"
@@ -140,7 +153,8 @@ def write_report(out: Path) -> Path:
         lines += ["", "## By task", "", "| Task | Mode | Rep | Result | Turns | Cost (USD) | Failed checks |",
                   "| --- | --- | ---: | --- | ---: | ---: | --- |"]
         for r in rows:
-            failed = "; ".join(f"{c['name']}: {c['detail']}" for c in r["checks"] if not c["passed"])
+            failed = "; ".join(f"{'(soft) ' if c.get('soft') else ''}{c['name']}: {c['detail']}"
+                               for c in r["checks"] if not c["passed"])
             if r.get("is_error"):
                 failed = (failed + "; " if failed else "") + f"agent error: {r.get('subtype')}"
             lines.append(f"| {r['task']} | {r['mode']} | {r['repeat']} | {'PASS' if r['passed'] else 'FAIL'} "
@@ -156,10 +170,11 @@ def main() -> None:
     p.add_argument("--project", default=None, help="Unreal project dir, if several editors are open")
     sub = p.add_subparsers(dest="cmd", required=True)
     c = sub.add_parser("check"); c.add_argument("--tasks", default=str(REPO / "tasks" / "core.toml"))
-    sub.add_parser("reset")
+    rs = sub.add_parser("reset"); rs.add_argument("--tasks", default="", help="also run this task file's [[seed]] steps")
     r = sub.add_parser("run")
     r.add_argument("--tasks", default=str(REPO / "tasks" / "core.toml"))
-    r.add_argument("--modes", default="full")
+    r.add_argument("--modes", default="full", help="comma list of full, catalog, preset")
+    r.add_argument("--areas", default=DEFAULT_PRESET_AREAS, help="areas listed at startup in preset mode")
     r.add_argument("--repeats", type=int, default=1)
     r.add_argument("--model", default="sonnet")
     r.add_argument("--max-turns", type=int, default=25)

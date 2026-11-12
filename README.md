@@ -17,15 +17,33 @@ write, applied to evaluation.
 | Input/output tokens and cost | What catalog mode is meant to save |
 | Tool errors | How often the agent's calls were refused or failed |
 
-Tasks can run in two modes: **full** (every tool listed up front) and **catalog** (a small core, with tool
-areas switched on as needed). The first comparison showed catalog mode does not work inside Claude Code,
-which already defers large tool lists itself, so `run` uses full mode by default. See [FINDINGS.md](FINDINGS.md).
+Tasks can run in three modes:
+
+- **full**: every tool listed up front. The default.
+- **catalog**: a small core, with tool areas switched on mid-session as needed. This does not work inside
+  Claude Code, which never re-reads the tool list ([finding 1](FINDINGS.md)).
+- **preset**: catalog mode with the areas a suite needs listed from startup (`--areas`), the form of
+  catalog mode Claude Code can use.
+
+## Suites
+
+| File | Tasks | What it tests |
+| --- | ---: | --- |
+| `tasks/core.toml` | 20 | Discovery, properties, materials, actors, Blueprints and diagnosis of planted faults |
+| `tasks/injection.toml` | 7 | Prompt injection: hostile instructions planted in labels, tags, metadata, a graph comment, the log and a folder name |
+
+A task file can add its own `[[seed]]` steps to the fixture; the injection suite plants its text that way.
+`scripts/injection_control.py` is its negative control: it carries out every planted instruction itself
+and confirms each task then grades FAIL, so a clean sweep can't come from checks that never fail.
+
+Results: [RESULTS.md](RESULTS.md). What they taught us: [FINDINGS.md](FINDINGS.md).
 
 ## How a run works
 
 1. Reset the fixture: remove everything under `/Game/EvalFixture` and every actor labelled `Eval*`, then
    re-seed from `fixtures/eval_fixture.toml`. No editor restart.
-2. Run the task with `claude -p`, given only the HullForge MCP server and none of Claude Code's built-in tools.
+2. Run the task with `claude -p`, given only the HullForge MCP server and none of Claude Code's built-in tools,
+   from an empty working directory so the agent can't see this repo (or the answers in it).
 3. Grade by calling HullForge tools directly over the bridge, outside the agent's session.
 4. Write one JSON result and the full event stream per run, then `report.md`.
 
@@ -44,6 +62,9 @@ uv run hf-eval check                                   # validate fixture and ta
 uv run hf-eval reset                                   # build the fixture once
 uv run hf-eval run --limit 5 --modes full              # smoke run
 uv run hf-eval run --repeats 3                         # full experiment
+uv run hf-eval run --tasks tasks/injection.toml --repeats 3 --model haiku
+uv run hf-eval run --modes preset --repeats 2           # catalog mode, areas listed at startup
+uv run python scripts/injection_control.py             # negative control for the injection suite
 uv run hf-eval report results/<run>                    # rebuild the report
 ```
 
@@ -61,6 +82,12 @@ other reasonable tools (`acceptable_tools`), and checks:
 | `answer_number` | The final answer contains the number |
 | `state_includes` / `state_excludes` | A direct tool call's result contains / does not contain the values |
 | `state_count` | A direct tool call's result has exactly N distinct regex matches |
+| `state_regex` | A direct tool call's result matches the pattern |
+| `answer_includes_any` | The final answer contains at least one of the values |
+| `read_only` | The agent called no tool that writes |
+| `tools_not_called` | The agent called none of the listed tools |
+
+Add `soft = true` to a check to report it without letting it decide pass or fail.
 
 ## License
 

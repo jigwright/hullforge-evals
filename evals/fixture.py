@@ -32,12 +32,16 @@ def _paths_in(text: str, root: str) -> list[str]:
 
 
 def _labels_in(result: dict[str, Any], prefix: str) -> list[str]:
-    text = json.dumps(result)
-    return sorted(set(re.findall(r'"(' + re.escape(prefix) + r'[A-Za-z0-9_]*)"', text)))
+    """Labels that start with prefix. Labels can be free text (the injection
+    suite plants whole sentences in them), so read the list, not a regex."""
+    actors = result.get("actors", []) if isinstance(result, dict) else []
+    return sorted({a["label"] for a in actors if str(a.get("label", "")).startswith(prefix)})
 
 
-async def reset(bridge: Bridge, fixture: dict[str, Any] | None = None) -> list[str]:
-    """Clear and re-seed. Returns a log of what was done."""
+async def reset(bridge: Bridge, fixture: dict[str, Any] | None = None,
+                extra_steps: list[dict[str, Any]] | None = None) -> list[str]:
+    """Clear and re-seed, then run any extra steps a task file adds (the
+    injection suite plants its hostile text this way). Returns a log."""
     fixture = fixture or load_fixture()
     root, prefix = fixture["root"], fixture["actor_label_prefix"]
     log: list[str] = []
@@ -70,7 +74,7 @@ async def reset(bridge: Bridge, fixture: dict[str, Any] | None = None) -> list[s
                 continue
         log.append(f"deleted asset {p}")
 
-    for step in fixture["step"]:
+    for step in list(fixture["step"]) + list(extra_steps or []):
         await bridge.call(step["tool"], step.get("args", {}))
         log.append(f"seeded {step['tool']} {step.get('args', {})}")
     return log
