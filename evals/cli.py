@@ -106,6 +106,7 @@ async def cmd_run(args: argparse.Namespace) -> int:
                     agent = await asyncio.to_thread(
                         run_agent, task["prompt"], model=args.model, max_turns=args.max_turns,
                         connector_dir=Path(args.connector), catalog_mode=(mode in ("catalog", "preset")),
+                        tool_mode="gateway" if mode == "gateway" else "full",
                         areas=args.areas.split(",") if mode == "preset" else None,
                         project_dir=args.project,
                     )
@@ -139,8 +140,8 @@ def write_report(out: Path) -> Path:
         lines.append("No results.")
     else:
         lines += ["## By mode", "",
-                  "| Mode | Runs | Pass rate | Median turns | Median input tokens | Median cost (USD) | Tool precision | Tool recall |",
-                  "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"]
+                  "| Mode | Runs | Pass rate | Median turns | Median startup context | Median input tokens | Median cost (USD) | Tool precision | Tool recall |",
+                  "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"]
         for mode in sorted({r["mode"] for r in rows}):
             rs = [r for r in rows if r["mode"] == mode]
             med = lambda xs: statistics.median(xs) if xs else 0
@@ -148,8 +149,19 @@ def write_report(out: Path) -> Path:
                    + r["usage"].get("cache_creation_input_tokens", 0) for r in rs]
             lines.append(
                 f"| {mode} | {len(rs)} | {sum(r['passed'] for r in rs) / len(rs):.0%} | {med([r['num_turns'] for r in rs])} "
-                f"| {med(tok):,.0f} | {med([r['cost_usd'] for r in rs]):.4f} "
+                f"| {med([r.get('startup_tokens', 0) for r in rs]):,.0f} | {med(tok):,.0f} | {med([r['cost_usd'] for r in rs]):.4f} "
                 f"| {statistics.mean(r['tool_precision'] for r in rs):.2f} | {statistics.mean(r['tool_recall'] for r in rs):.2f} |")
+        gws = [r for r in rows if r.get("gateway")]
+        if gws:
+            calls = sum(r["gateway"]["calls"] for r in gws)
+            first = sum(r["gateway"]["calls_schema_first"] for r in gws)
+            lines += ["", "## Gateway", "",
+                      "| Runs | Searches per run | Schema fetches per run | Calls | Schema fetched first | Refused: schema | Refused: wrong caller |",
+                      "| ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+                      f"| {len(gws)} | {statistics.mean(r['gateway']['searches'] for r in gws):.1f} "
+                      f"| {statistics.mean(r['gateway']['schema_fetches'] for r in gws):.1f} | {calls} "
+                      f"| {first / calls if calls else 0:.0%} | {sum(r['gateway']['schema_refusals'] for r in gws)} "
+                      f"| {sum(r['gateway']['caller_refusals'] for r in gws)} |"]
         lines += ["", "## By task", "", "| Task | Mode | Rep | Result | Turns | Cost (USD) | Failed checks |",
                   "| --- | --- | ---: | --- | ---: | ---: | --- |"]
         for r in rows:
@@ -173,7 +185,7 @@ def main() -> None:
     rs = sub.add_parser("reset"); rs.add_argument("--tasks", default="", help="also run this task file's [[seed]] steps")
     r = sub.add_parser("run")
     r.add_argument("--tasks", default=str(REPO / "tasks" / "core.toml"))
-    r.add_argument("--modes", default="full", help="comma list of full, catalog, preset")
+    r.add_argument("--modes", default="full", help="comma list of full, catalog, preset, gateway")
     r.add_argument("--areas", default=DEFAULT_PRESET_AREAS, help="areas listed at startup in preset mode")
     r.add_argument("--repeats", type=int, default=1)
     r.add_argument("--model", default="sonnet")

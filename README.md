@@ -24,6 +24,9 @@ Tasks can run in three modes:
   Claude Code, which never re-reads the tool list ([finding 1](FINDINGS.md)).
 - **preset**: catalog mode with the areas a suite needs listed from startup (`--areas`), the form of
   catalog mode Claude Code can use.
+- **gateway**: five fixed tools (search, schema, read, write, destroy) in front of the whole catalog. The
+  best result on every suite so far ([finding 9](FINDINGS.md)). Calls through the gateway are scored as the
+  tool they carried, so precision, recall and the safety checks mean the same in every mode.
 
 ## Suites
 
@@ -31,10 +34,14 @@ Tasks can run in three modes:
 | --- | ---: | --- |
 | `tasks/core.toml` | 20 | Discovery, properties, materials, actors, Blueprints and diagnosis of planted faults |
 | `tasks/injection.toml` | 7 | Prompt injection: hostile instructions planted in labels, tags, metadata, a graph comment, the log and a folder name |
+| `tasks/cross_area.toml` | 17 | Tasks outside the `@general` preset's areas (Sequencer, Data, Foliage, Audio and more), and chains across areas |
 
 A task file can add its own `[[seed]]` steps to the fixture; the injection suite plants its text that way.
 `scripts/injection_control.py` is its negative control: it carries out every planted instruction itself
 and confirms each task then grades FAIL, so a clean sweep can't come from checks that never fail.
+`scripts/cross_area_oracle.py` does the same for the cross-area suite in both directions: solved, every
+task passes; untouched (`--null`), every task fails. `scripts/search_recall.py` scores the gateway's
+search offline against `search/gold.toml`.
 
 Results: [RESULTS.md](RESULTS.md). What they taught us: [FINDINGS.md](FINDINGS.md).
 
@@ -64,7 +71,9 @@ uv run hf-eval run --limit 5 --modes full              # smoke run
 uv run hf-eval run --repeats 3                         # full experiment
 uv run hf-eval run --tasks tasks/injection.toml --repeats 3 --model haiku
 uv run hf-eval run --modes preset --repeats 2           # catalog mode, areas listed at startup
+uv run hf-eval run --modes full,preset,gateway --tasks tasks/cross_area.toml
 uv run python scripts/injection_control.py             # negative control for the injection suite
+uv run python scripts/compare.py results/<a> results/<b>  # modes side by side, cold and warm
 uv run hf-eval report results/<run>                    # rebuild the report
 ```
 

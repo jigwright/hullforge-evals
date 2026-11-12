@@ -1,0 +1,132 @@
+# Short queries of the kind an agent writes, with the tools that answer them.
+# Used offline to measure hf_search_tools recall before any agent run.
+# "a|b" means either tool is a correct answer.
+[[q]]
+query = "find assets in a folder"
+want = "hf_find_assets|hf_list_assets"
+[[q]]
+query = "list material instances"
+want = "hf_find_assets|hf_list_material_children|hf_list_assets"
+[[q]]
+query = "spawn actor"
+want = "hf_spawn_actor"
+[[q]]
+query = "spawn point light"
+want = "hf_spawn_actor"
+[[q]]
+query = "set actor scale"
+want = "hf_set_actor_transform"
+[[q]]
+query = "move actor"
+want = "hf_set_actor_transform"
+[[q]]
+query = "actor location"
+want = "hf_describe_actor|hf_get_actor_bounds"
+[[q]]
+query = "rename actor"
+want = "hf_set_actor_label"
+[[q]]
+query = "delete actor"
+want = "hf_delete_actor"
+[[q]]
+query = "list actors"
+want = "hf_list_actors"
+[[q]]
+query = "add blueprint variable"
+want = "hf_add_blueprint_variable"
+[[q]]
+query = "list blueprint variables"
+want = "hf_list_blueprint_variables"
+[[q]]
+query = "add component to blueprint"
+want = "hf_add_blueprint_component"
+[[q]]
+query = "create material instance"
+want = "hf_create_material_instance"
+[[q]]
+query = "set scalar parameter on material instance"
+want = "hf_set_material_parameter"
+[[q]]
+query = "material instance parent"
+want = "hf_describe_material_instance|hf_describe_material_lineage|hf_list_material_children"
+[[q]]
+query = "hide actor in game"
+want = "hf_set_actor_visibility"
+[[q]]
+query = "read property"
+want = "hf_get_property"
+[[q]]
+query = "set property"
+want = "hf_set_property"
+[[q]]
+query = "asset metadata tags"
+want = "hf_get_metadata_tag_values|hf_get_metadata_tag"
+[[q]]
+query = "output log"
+want = "hf_get_log"
+[[q]]
+query = "blueprint graph comments"
+want = "hf_describe_blueprint_comment|hf_describe_graph"
+[[q]]
+query = "compile blueprint"
+want = "hf_compile_blueprint"
+[[q]]
+query = "describe blueprint"
+want = "hf_describe_blueprint"
+[[q]]
+query = "niagara user parameter"
+want = "hf_set_niagara_user_parameter|hf_get_niagara_user_parameters|hf_list_niagara_user_parameters"
+[[q]]
+query = "add keyframe to sequence"
+want = "hf_set_sequence_key|hf_add_sequence_key"
+[[q]]
+query = "create level sequence"
+want = "hf_create_level_sequence"
+[[q]]
+query = "landscape layers"
+want = "hf_list_landscape_layers"
+[[q]]
+query = "pcg graph nodes"
+want = "hf_list_pcg_nodes|hf_describe_pcg_graph"
+[[q]]
+query = "count foliage instances"
+want = "hf_count_foliage_instances"
+[[q]]
+query = "viewport screenshot"
+want = "hf_screenshot"
+[[q]]
+query = "save asset"
+want = "hf_save_asset"
+[[q]]
+query = "undo"
+want = "hf_undo"
+[[q]]
+query = "texture size"
+want = "hf_describe_texture|hf_describe_texture_size|hf_describe_texture_dimensions"
+[[q]]
+query = "static mesh lods"
+want = "hf_describe_lods|hf_describe_mesh_lod"
+[[q]]
+query = "widget blueprint hierarchy"
+want = "hf_describe_widget_blueprint|hf_list_widgets"
+[[q]]
+query = "collision profile"
+want = "hf_set_collision_profile|hf_list_collision_profiles"
+[[q]]
+query = "set light intensity"
+want = "hf_set_light_property|hf_set_light_setting"
+[[q]]
+query = "create blueprint"
+want = "hf_create_blueprint"
+[[q]]
+query = "create folder"
+want = "hf_create_folder"
+[[q]]
+query = "delete asset"
+want = "hf_delete_asset"
+[[q]]
+query = "list sequence tracks"
+want = "hf_list_sequence_tracks"
+[[q]]
+query = "control rig controls"
+want = "hf_list_control_rig_elements|hf_describe_control_rig"

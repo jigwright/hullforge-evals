@@ -36,6 +36,7 @@ def _norm(s: str) -> str:
 READ_ONLY_PREFIXES = (
     "hf_list_", "hf_describe_", "hf_get_", "hf_find_", "hf_search_", "hf_audit_",
     "hf_is_", "hf_has_", "hf_does_", "hf_by_", "hf_catalog_status", "hf_bridge_status",
+    "hf_tool_schema",
 )
 
 

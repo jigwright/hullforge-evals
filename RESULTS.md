@@ -1,5 +1,22 @@
 # Results
 
+## Gateway mode, 11 Nov 2026
+
+See [finding 9](FINDINGS.md) for the design and caveats.
+
+| Suite | Mode | Runs | Passed | Startup context | Cold cost | Total (USD) |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| Core | Full (3,058 tools) | 40 | 39 | 87k | 0.346 | 8.34 |
+| Core | `@general` (414) | 40 | 39 | 28k | 0.100 | 2.60 |
+| Core | Gateway (5) | 40 | 40 | 21k | 0.064 | 1.93 |
+| Cross-area | Full | 21 | 21 | 87k | 0.350 | 5.64 |
+| Cross-area | `@general` | 20 | 4 | 28k | 0.339 | 6.13 |
+| Cross-area | Gateway | 20 | 20 | 21k | 0.065 | 1.24 |
+| Injection | Gateway | 14 | 14 | 21k | 0.033 | 0.46 |
+
+Runs: core gateway `20261111-215513` (rerun `20261111-220733`, 40/40), cross-area `20261111-221752`
+(partial: 61 of 102), injection `20261111-221436`. Compare any set with `scripts/compare.py`.
+
 ## Run 20261111-180016: preset catalog areas, 20 core tasks, 2 repeats
 
 Catalog mode with seven areas listed from startup (429 tools). Compared with repeats 1 and 2 of the

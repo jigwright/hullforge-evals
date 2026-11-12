@@ -1,0 +1,203 @@
+# Cross-area suite: tasks whose tools sit outside the @general preset
+# (Sequencer, Data, Foliage, Audio, Post Process, Meshes, Collision), and chains
+# across several areas. A preset that leaves these areas out cannot do them;
+# the full list and the gateway can. scripts/cross_area_oracle.py solves each
+# task directly and grades it, so every check is known to pass on a correct
+# solution.
+
+[[seed]]
+tool = "hf_create_folder"
+args = { path = "/Game/EvalFixture/Seq" }
+[[seed]]
+tool = "hf_create_folder"
+args = { path = "/Game/EvalFixture/Data" }
+[[seed]]
+tool = "hf_create_folder"
+args = { path = "/Game/EvalFixture/Audio" }
+[[seed]]
+tool = "hf_create_folder"
+args = { path = "/Game/EvalFixture/Foliage" }
+[[seed]]
+tool = "hf_create_level_sequence"
+args = { destination = "/Game/EvalFixture/Seq/LS_Shot", duration_seconds = 5 }
+[[seed]]
+tool = "hf_add_sequence_binding"
+args = { sequence = "/Game/EvalFixture/Seq/LS_Shot", actor = "EvalSun" }
+[[seed]]
+tool = "hf_create_struct"
+args = { destination = "/Game/EvalFixture/Data/S_Item" }
+[[seed]]
+tool = "hf_add_struct_member"
+args = { struct = "/Game/EvalFixture/Data/S_Item", member = "Value", type = "float" }
+
+[[task]]
+id = "xa.create_sequence"
+category = "Sequencer"
+prompt = "Create a level sequence at /Game/EvalFixture/Seq/LS_Intro, 10 seconds long."
+expected_tools = ["hf_create_level_sequence"]
+acceptable_tools = ["hf_describe_sequence", "hf_set_sequence_playback_range", "hf_find_assets", "hf_list_assets"]
+checks = [
+  { kind = "state_includes", tool = "hf_find_assets", args = { path = "/Game/EvalFixture/Seq", limit = 100 }, values = ["LS_Intro"] },
+]
+
+[[task]]
+id = "xa.bind_actor"
+category = "Sequencer"
+prompt = "Add EvalRock_A to the level sequence /Game/EvalFixture/Seq/LS_Shot so the sequence can animate it."
+expected_tools = ["hf_add_sequence_binding"]
+acceptable_tools = ["hf_list_sequence_bindings", "hf_describe_sequence", "hf_list_actors"]
+checks = [
+  { kind = "state_includes", tool = "hf_list_sequence_bindings", args = { sequence = "/Game/EvalFixture/Seq/LS_Shot" }, values = ["EvalRock_A", "EvalSun"] },
+]
+
+[[task]]
+id = "xa.playback_range"
+category = "Sequencer"
+prompt = "Set the playback range of the level sequence /Game/EvalFixture/Seq/LS_Shot to frames 0 to 120."
+expected_tools = ["hf_set_sequence_playback_range"]
+acceptable_tools = ["hf_describe_sequence", "hf_describe_sequence_timing"]
+checks = [
+  { kind = "state_regex", tool = "hf_describe_sequence", args = { sequence = "/Game/EvalFixture/Seq/LS_Shot" }, pattern = '"end": \{"display_frame": 120,' },
+]
+
+[[task]]
+id = "xa.sequence_question"
+category = "Sequencer"
+prompt = "Which actors does the level sequence /Game/EvalFixture/Seq/LS_Shot animate?"
+expected_tools = ["hf_list_sequence_bindings|hf_describe_sequence"]
+checks = [
+  { kind = "answer_includes", values = ["EvalSun"] },
+  { kind = "read_only" },
+]
+
+[[task]]
+id = "xa.transform_track"
+category = "Sequencer"
+prompt = "In the level sequence /Game/EvalFixture/Seq/LS_Shot, add a Transform track to EvalSun's binding."
+expected_tools = ["hf_add_sequence_track"]
+acceptable_tools = ["hf_list_sequence_bindings", "hf_describe_sequence", "hf_list_sequence_tracks"]
+checks = [
+  { kind = "state_includes", tool = "hf_list_sequence_tracks", args = { sequence = "/Game/EvalFixture/Seq/LS_Shot" }, values = ['"binding_name": "EvalSun"', '"display_name": "Transform"'] },
+]
+
+[[task]]
+id = "xa.create_enum"
+category = "Data"
+prompt = "Create an enum /Game/EvalFixture/Data/E_Rarity with the entries Common, Rare and Epic."
+expected_tools = ["hf_create_enum", "hf_add_enum_entry"]
+acceptable_tools = ["hf_describe_enum", "hf_set_enum_entry"]
+checks = [
+  { kind = "state_includes", tool = "hf_describe_enum", args = { enum = "/Game/EvalFixture/Data/E_Rarity" }, values = ["Common", "Rare", "Epic"] },
+]
+
+[[task]]
+id = "xa.create_struct"
+category = "Data"
+prompt = "Create a struct /Game/EvalFixture/Data/S_Loot with a float member named Weight."
+expected_tools = ["hf_create_struct", "hf_add_struct_member"]
+acceptable_tools = ["hf_describe_struct", "hf_set_struct_member", "hf_remove_struct_member"]
+checks = [
+  { kind = "state_includes", tool = "hf_describe_struct", args = { struct = "/Game/EvalFixture/Data/S_Loot" }, values = ["Weight"] },
+]
+
+[[task]]
+id = "xa.curve"
+category = "Data"
+prompt = "Create a float curve /Game/EvalFixture/Data/C_Falloff with a key of value 1 at time 0 and a key of value 0 at time 1."
+expected_tools = ["hf_create_curve", "hf_set_curve_key"]
+acceptable_tools = ["hf_describe_curve", "hf_evaluate_curve"]
+checks = [
+  { kind = "state_regex", tool = "hf_describe_curve", args = { curve = "/Game/EvalFixture/Data/C_Falloff" }, pattern = '"time": 0, "value": 1\}.*"time": 1, "value": 0\}' },
+]
+
+[[task]]
+id = "xa.data_table"
+category = "Data"
+prompt = "Create a data table /Game/EvalFixture/Data/DT_Items using the struct /Game/EvalFixture/Data/S_Item, and add a row named Sword."
+expected_tools = ["hf_create_data_table", "hf_add_data_table_row"]
+acceptable_tools = ["hf_describe_data_table", "hf_describe_struct", "hf_set_data_table_value", "hf_get_data_table_rows"]
+checks = [
+  { kind = "state_includes", tool = "hf_describe_data_table", args = { table = "/Game/EvalFixture/Data/DT_Items" }, values = ["Sword"] },
+]
+
+[[task]]
+id = "xa.foliage_type"
+category = "Foliage"
+prompt = "Create a foliage type /Game/EvalFixture/Foliage/FT_Cube that places the mesh /Engine/BasicShapes/Cube."
+expected_tools = ["hf_create_foliage_type"]
+acceptable_tools = ["hf_describe_foliage_type", "hf_find_assets"]
+checks = [
+  { kind = "state_includes", tool = "hf_find_assets", args = { path = "/Game/EvalFixture/Foliage", limit = 100 }, values = ["FT_Cube"] },
+]
+
+[[task]]
+id = "xa.attenuation"
+category = "Audio"
+prompt = "Create a sound attenuation asset /Game/EvalFixture/Audio/ATT_Eval whose sound fades out over 2000 units past its radius."
+expected_tools = ["hf_create_attenuation"]
+acceptable_tools = ["hf_describe_attenuation", "hf_set_attenuation", "hf_set_attenuation_settings"]
+checks = [
+  { kind = "state_regex", tool = "hf_describe_attenuation", args = { attenuation = "/Game/EvalFixture/Audio/ATT_Eval" }, pattern = '"falloff_distance": 2000(\.0)?[,}]' },
+]
+
+[[task]]
+id = "xa.sound_cue"
+category = "Audio"
+prompt = "Create an empty sound cue at /Game/EvalFixture/Audio/CUE_Eval."
+expected_tools = ["hf_create_sound_cue"]
+acceptable_tools = ["hf_describe_sound_cue", "hf_find_assets"]
+checks = [
+  { kind = "state_includes", tool = "hf_find_assets", args = { path = "/Game/EvalFixture/Audio", limit = 100 }, values = ["CUE_Eval"] },
+]
+
+[[task]]
+id = "xa.post_process"
+category = "Post Process"
+prompt = "Add an unbound post process volume labelled EvalPPV to the level."
+expected_tools = ["hf_add_post_process_volume"]
+acceptable_tools = ["hf_describe_post_process", "hf_list_actors"]
+checks = [
+  { kind = "state_regex", tool = "hf_describe_post_process", args = { volume = "EvalPPV" }, pattern = '"unbound": true' },
+]
+
+[[task]]
+id = "xa.mesh_triangles"
+category = "Meshes"
+prompt = "How many triangles does LOD 0 of the static mesh /Engine/BasicShapes/Cube have?"
+expected_tools = ["hf_get_mesh_info|hf_describe_lods|hf_describe_mesh_lod|hf_measure_static_mesh_geometry"]
+checks = [
+  { kind = "answer_number", equals = 48 },
+  { kind = "read_only" },
+]
+
+[[task]]
+id = "xa.collision_question"
+category = "Collision"
+prompt = "What collision profile does EvalRock_A's static mesh component use?"
+expected_tools = ["hf_describe_component_collision|hf_describe_component_collision_settings|hf_get_property"]
+checks = [
+  { kind = "answer_includes", values = ["BlockAll"] },
+  { kind = "read_only" },
+]
+
+[[task]]
+id = "xa.chain_mi_sequence"
+category = "Chain"
+prompt = "Create a material instance /Game/EvalFixture/Materials/MI_Pulse from M_Rock, create a level sequence /Game/EvalFixture/Seq/LS_Pulse, and bind EvalRock_B into LS_Pulse."
+expected_tools = ["hf_create_material_instance", "hf_create_level_sequence", "hf_add_sequence_binding"]
+acceptable_tools = ["hf_list_sequence_bindings", "hf_find_assets", "hf_list_assets", "hf_describe_material_instance"]
+checks = [
+  { kind = "state_includes", tool = "hf_find_assets", args = { path = "/Game/EvalFixture", limit = 500 }, values = ["MI_Pulse", "LS_Pulse"] },
+  { kind = "state_includes", tool = "hf_list_sequence_bindings", args = { sequence = "/Game/EvalFixture/Seq/LS_Pulse" }, values = ["EvalRock_B"] },
+]
+
+[[task]]
+id = "xa.chain_data"
+category = "Chain"
+prompt = "Create an enum /Game/EvalFixture/Data/E_Slot with entries Head and Chest, and a struct /Game/EvalFixture/Data/S_Gear with a float member Armor."
+expected_tools = ["hf_create_enum", "hf_add_enum_entry", "hf_create_struct", "hf_add_struct_member"]
+acceptable_tools = ["hf_describe_enum", "hf_describe_struct"]
+checks = [
+  { kind = "state_includes", tool = "hf_describe_enum", args = { enum = "/Game/EvalFixture/Data/E_Slot" }, values = ["Head", "Chest"] },
+  { kind = "state_includes", tool = "hf_describe_struct", args = { struct = "/Game/EvalFixture/Data/S_Gear" }, values = ["Armor"] },
+]

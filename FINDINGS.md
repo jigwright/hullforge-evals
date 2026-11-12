@@ -117,6 +117,9 @@ allowed; HullForge's own `confirm` rail was never tested, because no agent tried
 
 ## 8. Preset catalog areas cut context and cost by two thirds (11 Nov 2026)
 
+> **Superseded by finding 9.** Presets save tokens by giving up coverage; the gateway saves more and
+> keeps it.
+
 **What finding 1 missed.** Claude Code's deferred loading hides tool *schemas*, but it still puts the
 *name* of every tool into context, after the user's first message. With 3,058 tools that list is about
 78,000 tokens. The first time a prompt runs, Claude Code writes it to the prompt cache, which is why
@@ -147,3 +150,67 @@ HullForge, not the harness: area presets per kind of work, or a much shorter nam
 
 **Decision.** HullForge's README and the connector's now recommend preset areas for Claude Code, and
 full mode only when no preset fits.
+
+## 9. A five-tool gateway beats the full list and presets on every measure (11 Nov 2026)
+
+**Design.** `HULLFORGE_TOOL_MODE=gateway` lists five fixed tools instead of 3,058: `hf_search_tools`,
+`hf_tool_schema`, and three callers split by risk, `hf_read`, `hf_write` and `hf_destroy`. The list never
+changes, so it works in clients that read it once. Search runs in the connector over the cached catalog.
+Every call is checked against the tool's real schema before it reaches the editor, a destructive tool only
+runs through `hf_destroy` with `confirm=true`, and a tool sent through the wrong caller is refused, not
+rerouted.
+
+**Core suite**, 20 tasks, repeats 1 and 2, Sonnet. Full and preset as in finding 8; gateway run
+`20261111-215513`.
+
+| Mode | Tools listed | Passed | Startup context | Context per run | Cold cost | Warm cost | Total |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Full | 3,058 | 39 / 40 | 87k | 265k | $0.346 | $0.038 | $8.34 |
+| `@general` preset | 414 | 39 / 40 | 28k | 88k | $0.100 | $0.017 | $2.60 |
+| Gateway | 5 | **40 / 40** | **21k** | 88k | **$0.064** | $0.020 | **$1.93** |
+
+Costs are medians, API-equivalent. Startup context is the first model call: Claude Code's own system prompt
+plus the tool list. A rerun on the final version (`20261111-220733`) passed 40/40 again. Its cold cost isn't
+quoted because it started with the prompt cache still warm from the first run.
+
+**Cross-area suite** (`tasks/cross_area.toml`, run `20261111-221752`). 17 tasks whose tools are outside
+`@general`: Sequencer, Data, Foliage, Audio, Post Process, Meshes, Collision, and chains across areas.
+Repeat 1 of every task, plus repeat 2 of four. The run was cut short at 61 of 102 when the editor closed;
+the remaining runs were not redone.
+
+| Mode | Runs | Passed | Median turns | Context per run | Cold cost | Total |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Full | 21 | 21 | 4 | 351k | $0.350 | $5.64 |
+| `@general` preset | 20 | 4 | 13 | 566k | $0.339 | $6.13 |
+| Gateway | 20 | **20** | 4 | 88k | **$0.065** | **$1.24** |
+
+Outside its areas the preset isn't just incapable, it's the most expensive mode. The agent tries to switch
+areas on, which Claude Code never picks up, searches for tools that aren't there, and reports honestly that it
+can't do the task.
+
+**Injection suite**, gateway, 2 repeats: 14/14 resisted, 13 told the user about the planted text, no
+destructive tool called.
+
+**Search.** On 43 short queries of the kind agents write (`search/gold.toml`,
+`scripts/search_recall.py`), the connector's search puts the right tool first 31 times, in the top 3 39
+times and in the top 8 40 times. Two things lifted it from 25/36/39: a prior from how many other tools'
+descriptions name a tool, which surfaces general tools like `hf_spawn_actor`, and ranking reads first
+when the query has no action verb.
+
+**What to watch.**
+- **Agents often skip the schema step.** Only 38–59% of calls had their schema fetched first; the agent
+  calls straight from the search hit. Server-side validation catches wrong arguments (one or two refusals per
+  suite), but not right-typed wrong values. That's how one injection task first failed: the agent passed a
+  package path where an object path was required. Search results now carry each required argument's meaning,
+  and the task passes.
+- Precision and recall are a little lower than the full list's (0.92 vs 0.96 on core) because the agent
+  often finds an equally valid tool the task didn't list.
+
+**Decision.** The gateway becomes the recommended mode for Claude Code and Claude Desktop. Presets and catalog
+mode stay for clients that need them.
+
+## 10. HullForge: `hf_get_metadata_tag_values` reads a package path as "no tags"
+
+Given `/Game/EvalFixture/Materials/M_Sand` instead of the object path `.../M_Sand.M_Sand`, the tool returns
+an empty tag map with no error. An agent then reports confidently that the asset has no metadata. The tool
+should resolve a package path to its asset, or refuse it.
