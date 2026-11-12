@@ -53,3 +53,11 @@ direct tool than the two the task listed. Tasks now accept alternative tools (`"
 
 `hf_set_property` accepts `StaticMeshComponent.StaticMesh` on an actor and verifies the write;
 `hf_get_property` with the same path answers "No property". A gap for the HullForge backlog.
+
+## 6. The one failure in 60 runs points at a HullForge gap, not the agent
+
+In the 3-repeat run (`20261111-171454`), `diagnosis.hidden_in_game` failed once and took 14 to 18 turns
+every time. `hf_describe_actor` reports `hidden_in_editor` but not hidden-in-game, so the agent has to
+think of reading `bHidden` with `hf_get_property`. When it didn't, it said honestly that it could not find
+a cause. Adding `hidden_in_game` to `hf_describe_actor` should turn this into a one-call answer; the
+benchmark will show whether it does.
