@@ -68,6 +68,11 @@ async def run_check(bridge: Bridge, check: dict[str, Any], answer: str) -> Check
         ok = count == check["equals"]
         return CheckResult(name, ok, "" if ok else f"expected {check['equals']}, found {count}")
 
+    if kind == "state_regex":
+        text = await bridge.call_text(check["tool"], check.get("args", {}))
+        ok = re.search(check["pattern"], text) is not None
+        return CheckResult(name, ok, "" if ok else f"pattern {check['pattern']!r} not found")
+
     raise ValueError(f"unknown check kind {kind!r}")
 
 

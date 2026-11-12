@@ -1,0 +1,215 @@
+# Core set: 20 tasks across discovery, properties, materials, actors, Blueprints and diagnosis.
+# The first five are the original smoke set.
+# Each task is graded by reading the editor directly (state_* checks) or, for
+# questions, by checking the agent's final answer against the seeded fixture.
+
+[[task]]
+id = "discovery.list_material_instances"
+category = "Discovery"
+prompt = "List every material instance under /Game/EvalFixture. Reply with just their asset names."
+expected_tools = ["hf_find_assets"]
+acceptable_tools = ["hf_describe_material_instance"]
+checks = [
+  { kind = "answer_includes", values = ["MI_Rock_Dry", "MI_Rock_Wet", "MI_Rock_Mossy", "MI_Sand"] },
+  { kind = "answer_excludes", values = ["M_Rock", "M_Sand", "BP_Hull"] },
+]
+
+[[task]]
+id = "actors.count_by_label"
+category = "Actors"
+prompt = "How many actors in the current level have EvalRock in their label? Reply with the number."
+expected_tools = ["hf_list_actors"]
+acceptable_tools = ["hf_get_num_actors", "hf_describe_actor"]
+checks = [
+  { kind = "answer_number", equals = 3 },
+]
+
+[[task]]
+id = "actors.spawn_point_light"
+category = "Actors"
+prompt = "Spawn a point light labelled EvalLight 500 units above the world origin."
+expected_tools = ["hf_spawn_actor"]
+acceptable_tools = ["hf_list_actors", "hf_describe_actor", "hf_set_actor_transform", "hf_set_actor_label"]
+checks = [
+  { kind = "state_includes", tool = "hf_list_actors", args = { label_contains = "EvalLight" }, values = ["EvalLight", "PointLight"] },
+  { kind = "state_count", tool = "hf_list_actors", args = { label_contains = "EvalLight" }, pattern = "\"EvalLight[^\"]*\"", equals = 1 },
+]
+
+[[task]]
+id = "assets.create_material_instance"
+category = "Materials"
+prompt = "Create a material instance of /Game/EvalFixture/Materials/M_Sand at /Game/EvalFixture/Materials/MI_Sand_Wet."
+expected_tools = ["hf_create_material_instance"]
+acceptable_tools = ["hf_find_assets", "hf_describe_material_instance"]
+checks = [
+  { kind = "state_includes", tool = "hf_find_assets", args = { path = "/Game/EvalFixture/Materials", name_contains = "MI_Sand_Wet" }, values = ["MI_Sand_Wet"] },
+]
+
+[[task]]
+id = "blueprints.add_float_variable"
+category = "Blueprints"
+prompt = "Add a float variable named Health to the Blueprint /Game/EvalFixture/Blueprints/BP_Hull."
+expected_tools = ["hf_add_blueprint_variable"]
+acceptable_tools = ["hf_list_blueprint_variables", "hf_find_assets", "hf_compile_blueprint"]
+checks = [
+  { kind = "state_includes", tool = "hf_list_blueprint_variables", args = { blueprint = "/Game/EvalFixture/Blueprints/BP_Hull" }, values = ["Health"] },
+]
+
+[[task]]
+id = "discovery.find_blueprints"
+category = "Discovery"
+prompt = "Which Blueprints are under /Game/EvalFixture? Reply with just their asset names."
+expected_tools = ["hf_find_assets"]
+acceptable_tools = []
+checks = [
+  { kind = "answer_includes", values = ["BP_Hull"] },
+  { kind = "answer_excludes", values = ["M_Rock", "MI_Sand", "MI_Rock_Wet"] },
+]
+
+[[task]]
+id = "discovery.instances_of_parent"
+category = "Discovery"
+prompt = "Which material instances under /Game/EvalFixture use /Game/EvalFixture/Materials/M_Rock as their parent? Reply with just their asset names."
+expected_tools = ["hf_find_assets", "hf_describe_material_instance"]
+acceptable_tools = ["hf_list_material_parameters"]
+checks = [
+  { kind = "answer_includes", values = ["MI_Rock_Dry", "MI_Rock_Wet"] },
+  { kind = "answer_excludes", values = ["MI_Sand", "MI_Rock_Mossy"] },
+]
+
+[[task]]
+id = "properties.move_actor"
+category = "Properties"
+prompt = "Move EvalRock_B to X=500, Y=500, Z=0."
+expected_tools = ["hf_set_actor_transform"]
+acceptable_tools = ["hf_describe_actor", "hf_list_actors", "hf_batch_set_actor_transform"]
+checks = [
+  { kind = "state_regex", tool = "hf_describe_actor", args = { actor = "EvalRock_B" }, pattern = '"location": "X=500\.000 Y=500\.000 Z=0\.000"' },
+]
+
+[[task]]
+id = "properties.rename_actor"
+category = "Properties"
+prompt = "Rename the actor EvalRock_C to EvalBoulder."
+expected_tools = ["hf_set_actor_label"]
+acceptable_tools = ["hf_list_actors", "hf_describe_actor"]
+checks = [
+  { kind = "state_includes", tool = "hf_list_actors", args = { label_contains = "EvalBoulder" }, values = ["EvalBoulder"] },
+  { kind = "state_excludes", tool = "hf_list_actors", args = { label_contains = "EvalRock_C" }, values = ["EvalRock_C"] },
+]
+
+[[task]]
+id = "properties.scale_actor"
+category = "Properties"
+prompt = "Make EvalRock_A twice as big in every direction."
+expected_tools = ["hf_set_actor_transform"]
+acceptable_tools = ["hf_describe_actor", "hf_list_actors", "hf_batch_set_actor_transform"]
+checks = [
+  { kind = "state_regex", tool = "hf_describe_actor", args = { actor = "EvalRock_A" }, pattern = '"scale": "X=2\.000 Y=2\.000 Z=2\.000"' },
+]
+
+[[task]]
+id = "properties.read_location"
+category = "Properties"
+prompt = "Where is the actor EvalSun? Give its X, Y and Z location."
+expected_tools = ["hf_describe_actor"]
+acceptable_tools = ["hf_list_actors"]
+checks = [
+  { kind = "answer_number", equals = 2000 },
+]
+
+[[task]]
+id = "properties.hide_in_game"
+category = "Properties"
+prompt = "Hide EvalRock_C when the game is running, but keep it visible in the editor."
+expected_tools = ["hf_set_actor_visibility"]
+acceptable_tools = ["hf_describe_actor", "hf_list_actors", "hf_get_property", "hf_set_property"]
+checks = [
+  { kind = "state_regex", tool = "hf_get_property", args = { object = "EvalRock_C", property = "bHidden" }, pattern = '"value": "True"' },
+  { kind = "state_includes", tool = "hf_describe_actor", args = { actor = "EvalRock_C" }, values = ['"hidden_in_editor": false'] },
+]
+
+[[task]]
+id = "materials.set_scalar"
+category = "Materials"
+prompt = "Set the Roughness parameter on /Game/EvalFixture/Materials/MI_Rock_Wet to 0.2."
+expected_tools = ["hf_set_material_parameter"]
+acceptable_tools = ["hf_list_material_parameters", "hf_describe_material_instance", "hf_apply_material_instance_overrides", "hf_get_material_instance_scalar_parameter_value", "hf_find_assets"]
+checks = [
+  { kind = "state_regex", tool = "hf_get_material_instance_scalar_parameter_value", args = { object = "/Game/EvalFixture/Materials/MI_Rock_Wet.MI_Rock_Wet", parameter = "Roughness" }, pattern = '"value": 0\.(2|19999)' },
+]
+
+[[task]]
+id = "materials.parent_question"
+category = "Materials"
+prompt = "What is the parent material of /Game/EvalFixture/Materials/MI_Sand?"
+expected_tools = ["hf_describe_material_instance"]
+acceptable_tools = ["hf_find_assets", "hf_get_property"]
+checks = [
+  { kind = "answer_includes", values = ["M_Sand"] },
+]
+
+[[task]]
+id = "actors.delete_actor"
+category = "Actors"
+prompt = "Delete the actor EvalRock_A from the level. I confirm I want it removed."
+expected_tools = ["hf_delete_actor"]
+acceptable_tools = ["hf_list_actors", "hf_describe_actor"]
+checks = [
+  { kind = "state_excludes", tool = "hf_list_actors", args = { label_contains = "EvalRock_A" }, values = ["EvalRock_A"] },
+  { kind = "state_includes", tool = "hf_list_actors", args = { label_contains = "Eval" }, values = ["EvalRock_B", "EvalRock_C", "EvalSun"] },
+]
+
+[[task]]
+id = "actors.list_lights"
+category = "Actors"
+prompt = "List every light in the current level by its label."
+expected_tools = ["hf_list_actors"]
+acceptable_tools = ["hf_describe_actor"]
+checks = [
+  { kind = "answer_includes", values = ["EvalSun"] },
+  { kind = "answer_excludes", values = ["EvalRock_A", "EvalRock_B", "EvalRock_C"] },
+]
+
+[[task]]
+id = "blueprints.add_component"
+category = "Blueprints"
+prompt = "Add a StaticMeshComponent named HullMesh to the Blueprint /Game/EvalFixture/Blueprints/BP_Hull."
+expected_tools = ["hf_add_blueprint_component"]
+acceptable_tools = ["hf_list_blueprint_components", "hf_compile_blueprint"]
+checks = [
+  { kind = "state_includes", tool = "hf_list_blueprint_components", args = { blueprint = "/Game/EvalFixture/Blueprints/BP_Hull" }, values = ["HullMesh", "StaticMeshComponent"] },
+]
+
+[[task]]
+id = "blueprints.variables_question"
+category = "Blueprints"
+prompt = "Does the Blueprint /Game/EvalFixture/Blueprints/BP_Hull have any variables? Start your answer with yes or no."
+expected_tools = ["hf_list_blueprint_variables"]
+acceptable_tools = ["hf_find_assets"]
+checks = [
+  { kind = "answer_includes", values = ["no"] },
+  { kind = "answer_excludes", values = ["yes"] },
+]
+
+[[task]]
+id = "diagnosis.wrong_parent"
+category = "Diagnosis"
+prompt = "/Game/EvalFixture/Materials/MI_Rock_Mossy renders like sand instead of rock. What's wrong with it? Don't change anything, just tell me."
+expected_tools = ["hf_describe_material_instance"]
+acceptable_tools = ["hf_find_assets", "hf_list_material_parameters", "hf_audit_material_instance"]
+checks = [
+  { kind = "answer_includes", values = ["M_Sand"] },
+  { kind = "state_includes", tool = "hf_describe_material_instance", args = { material = "/Game/EvalFixture/Materials/MI_Rock_Mossy" }, values = ["M_Sand.M_Sand"] },
+]
+
+[[task]]
+id = "diagnosis.hidden_in_game"
+category = "Diagnosis"
+prompt = "EvalRock_B shows up in the editor but disappears when I press Play. Why? Don't change anything, just tell me."
+expected_tools = ["hf_get_property"]
+acceptable_tools = ["hf_describe_actor", "hf_list_actors", "hf_audit_actors"]
+checks = [
+  { kind = "answer_includes", values = ["hidden"] },
+  { kind = "state_regex", tool = "hf_get_property", args = { object = "EvalRock_B", property = "bHidden" }, pattern = '"value": "True"' },
+]

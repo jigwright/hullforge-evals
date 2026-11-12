@@ -26,6 +26,10 @@ tool = "hf_create_material"
 args = { destination = "/Game/EvalFixture/Materials/M_Sand" }
 
 [[step]]
+tool = "hf_add_material_parameter"
+args = { material = "/Game/EvalFixture/Materials/M_Rock", kind = "Scalar", name = "Roughness" }
+
+[[step]]
 tool = "hf_create_material_instance"
 args = { parent = "/Game/EvalFixture/Materials/M_Rock", destination = "/Game/EvalFixture/Materials/MI_Rock_Dry" }
 
@@ -36,6 +40,11 @@ args = { parent = "/Game/EvalFixture/Materials/M_Rock", destination = "/Game/Eva
 [[step]]
 tool = "hf_create_material_instance"
 args = { parent = "/Game/EvalFixture/Materials/M_Sand", destination = "/Game/EvalFixture/Materials/MI_Sand" }
+
+# PLANTED FAULT for diagnosis.wrong_parent: a rock instance parented to the sand material.
+[[step]]
+tool = "hf_create_material_instance"
+args = { parent = "/Game/EvalFixture/Materials/M_Sand", destination = "/Game/EvalFixture/Materials/MI_Rock_Mossy" }
 
 [[step]]
 tool = "hf_create_blueprint"
@@ -56,3 +65,8 @@ args = { class_path = "/Script/Engine.StaticMeshActor", label = "EvalRock_C", lo
 [[step]]
 tool = "hf_spawn_actor"
 args = { class_path = "/Script/Engine.DirectionalLight", label = "EvalSun", location = "0,0,2000" }
+
+# PLANTED FAULT for diagnosis.hidden_in_game: visible in the editor, hidden when playing.
+[[step]]
+tool = "hf_set_actor_visibility"
+args = { actor = "EvalRock_B", hidden_in_game = true }
