@@ -17,7 +17,11 @@ write, applied to evaluation.
 | Input/output tokens and cost | What catalog mode is meant to save |
 | Tool errors | How often the agent's calls were refused or failed |
 
-Tasks can run in three modes:
+The connector is gateway-only from hullforge-mcp `a0e6328` on, and `gateway` is the mode to use. The
+other modes are kept so the published comparisons can be reproduced: run them against hullforge-mcp
+`0e78b15` or earlier (`--connector` points at the checkout).
+
+Tasks could run in these modes:
 
 - **full**: every tool listed up front. The default.
 - **catalog**: a small core, with tool areas switched on mid-session as needed. This does not work inside

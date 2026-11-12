@@ -206,8 +206,8 @@ when the query has no action verb.
 - Precision and recall are a little lower than the full list's (0.92 vs 0.96 on core) because the agent
   often finds an equally valid tool the task didn't list.
 
-**Decision.** The gateway becomes the recommended mode for Claude Code and Claude Desktop. Presets and catalog
-mode stay for clients that need them.
+**Decision.** The gateway is the only way the connector works now (hullforge-mcp `a0e6328`). Catalog mode,
+presets and the full list were removed rather than kept as options.
 
 ## 10. HullForge: `hf_get_metadata_tag_values` reads a package path as "no tags"
 
