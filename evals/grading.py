@@ -43,6 +43,10 @@ async def run_check(bridge: Bridge, check: dict[str, Any], answer: str) -> Check
         missing = [s for s in check["values"] if not _has_word(answer, s)]
         return CheckResult(name, not missing, f"missing from answer: {missing}" if missing else "")
 
+    if kind == "answer_includes_any":
+        hit = [s for s in check["values"] if _norm(s) in _norm(answer)]
+        return CheckResult(name, bool(hit), "" if hit else f"none of {check['values']} in answer")
+
     if kind == "answer_excludes":
         present = [s for s in check["values"] if _has_word(answer, s)]
         return CheckResult(name, not present, f"should not appear: {present}" if present else "")

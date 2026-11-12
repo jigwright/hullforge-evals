@@ -33,3 +33,23 @@ Asked for "every material instance under /Game/EvalFixture", the agent listed th
 `M_Rock` and `M_Sand` along with the three real instances. The grader, which checks answers as whole
 words, failed it. This is the kind of mistake the benchmark exists to catch, and a candidate for a
 clearer tool result (class shown per row) or tool description.
+
+## 3. The agent caught a flaw in the benchmark itself
+
+The first version of `diagnosis.hidden_in_game` said EvalRock_B "shows up in the editor but disappears
+in Play". The fixture's rocks had no mesh assigned, so they were invisible in the editor too. The agent
+reported that, which was correct, and the grader passed it only because the word "hidden" appeared
+somewhere in the answer. Two fixes followed: the rocks now get a real mesh, and the grader requires the
+actual cause (`bHidden`, "hidden in game"). The lesson is the same one as the article's: a check that
+passes for the wrong reason is worse than no check.
+
+## 4. Agents find better routes than the task author
+
+Asked which instances use M_Rock as their parent, the agent used `hf_list_material_children`, a more
+direct tool than the two the task listed. Tasks now accept alternative tools (`"a|b"` in
+`expected_tools`), so a better route isn't scored as a miss.
+
+## 5. HullForge: `hf_get_property` can't read a path that `hf_set_property` can write
+
+`hf_set_property` accepts `StaticMeshComponent.StaticMesh` on an actor and verifies the write;
+`hf_get_property` with the same path answers "No property". A gap for the HullForge backlog.

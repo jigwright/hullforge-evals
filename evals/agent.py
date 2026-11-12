@@ -156,15 +156,17 @@ def tool_selection(
 ) -> tuple[float, float]:
     """Precision and recall of the distinct task tools the agent used.
 
-    expected: tools a correct solution needs (recall is measured against these).
+    expected: tools a correct solution needs (recall is measured against these);
+    an entry "a|b" accepts either tool.
     acceptable: other tools that are a reasonable part of a correct solution,
     such as a lookup before a write. They do not count against precision.
     """
     used = {t for t in called if t not in CATALOG_TOOLS}
-    want = set(expected)
-    ok = want | set(acceptable or [])
-    if not want:
+    # Each expected entry may list alternatives as "a|b": either one satisfies it.
+    groups = [set(e.split("|")) for e in expected]
+    if not groups:
         return (1.0, 1.0)
+    ok = set().union(*groups) | set(acceptable or [])
     precision = len(used & ok) / len(used) if used else 0.0
-    recall = len(used & want) / len(want)
+    recall = sum(1 for g in groups if used & g) / len(groups)
     return (round(precision, 3), round(recall, 3))

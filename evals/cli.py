@@ -50,7 +50,8 @@ async def cmd_check(args: argparse.Namespace) -> int:
                 problems += 1
                 print(f"RESET    {e}")
         for task in load_tasks(Path(args.tasks)):
-            for t in task.get("expected_tools", []) + task.get("acceptable_tools", []):
+            names = [n for e in task.get("expected_tools", []) for n in e.split("|")]
+            for t in names + task.get("acceptable_tools", []):
                 if t not in b.schemas:
                     problems += 1
                     print(f"TASK     {task['id']}: {t} is not in the editor's tool list")

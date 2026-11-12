@@ -70,8 +70,8 @@ checks = [
 id = "discovery.instances_of_parent"
 category = "Discovery"
 prompt = "Which material instances under /Game/EvalFixture use /Game/EvalFixture/Materials/M_Rock as their parent? Reply with just their asset names."
-expected_tools = ["hf_find_assets", "hf_describe_material_instance"]
-acceptable_tools = ["hf_list_material_parameters"]
+expected_tools = ["hf_describe_material_instance|hf_list_material_children|hf_describe_material_lineage"]
+acceptable_tools = ["hf_find_assets", "hf_list_material_parameters"]
 checks = [
   { kind = "answer_includes", values = ["MI_Rock_Dry", "MI_Rock_Wet"] },
   { kind = "answer_excludes", values = ["MI_Sand", "MI_Rock_Mossy"] },
@@ -143,8 +143,8 @@ checks = [
 id = "materials.parent_question"
 category = "Materials"
 prompt = "What is the parent material of /Game/EvalFixture/Materials/MI_Sand?"
-expected_tools = ["hf_describe_material_instance"]
-acceptable_tools = ["hf_find_assets", "hf_get_property"]
+expected_tools = ["hf_describe_material_instance|hf_describe_material_lineage|hf_get_property"]
+acceptable_tools = ["hf_find_assets"]
 checks = [
   { kind = "answer_includes", values = ["M_Sand"] },
 ]
@@ -196,8 +196,8 @@ checks = [
 id = "diagnosis.wrong_parent"
 category = "Diagnosis"
 prompt = "/Game/EvalFixture/Materials/MI_Rock_Mossy renders like sand instead of rock. What's wrong with it? Don't change anything, just tell me."
-expected_tools = ["hf_describe_material_instance"]
-acceptable_tools = ["hf_find_assets", "hf_list_material_parameters", "hf_audit_material_instance"]
+expected_tools = ["hf_describe_material_instance|hf_audit_material_instance|hf_describe_material_lineage|hf_diff_material_instance"]
+acceptable_tools = ["hf_find_assets", "hf_list_material_parameters"]
 checks = [
   { kind = "answer_includes", values = ["M_Sand"] },
   { kind = "state_includes", tool = "hf_describe_material_instance", args = { material = "/Game/EvalFixture/Materials/MI_Rock_Mossy" }, values = ["M_Sand.M_Sand"] },
@@ -207,9 +207,9 @@ checks = [
 id = "diagnosis.hidden_in_game"
 category = "Diagnosis"
 prompt = "EvalRock_B shows up in the editor but disappears when I press Play. Why? Don't change anything, just tell me."
-expected_tools = ["hf_get_property"]
-acceptable_tools = ["hf_describe_actor", "hf_list_actors", "hf_audit_actors"]
+expected_tools = ["hf_get_property|hf_describe_actor_editor_state|hf_describe_actor_lifetime"]
+acceptable_tools = ["hf_describe_actor", "hf_list_actors", "hf_audit_actors", "hf_describe_actor_component", "hf_describe_component_state", "hf_describe_component_render_overrides"]
 checks = [
-  { kind = "answer_includes", values = ["hidden"] },
+  { kind = "answer_includes_any", values = ["bHidden", "hidden in game", "HiddenInGame", "Hidden In Game", "hidden_in_game"] },
   { kind = "state_regex", tool = "hf_get_property", args = { object = "EvalRock_B", property = "bHidden" }, pattern = '"value": "True"' },
 ]

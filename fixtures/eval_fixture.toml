@@ -66,6 +66,19 @@ args = { class_path = "/Script/Engine.StaticMeshActor", label = "EvalRock_C", lo
 tool = "hf_spawn_actor"
 args = { class_path = "/Script/Engine.DirectionalLight", label = "EvalSun", location = "0,0,2000" }
 
+# Real meshes, so the rocks are visible in the editor.
+[[step]]
+tool = "hf_set_property"
+args = { object = "EvalRock_A", property = "StaticMeshComponent.StaticMesh", value = "/Engine/BasicShapes/Cube.Cube" }
+
+[[step]]
+tool = "hf_set_property"
+args = { object = "EvalRock_B", property = "StaticMeshComponent.StaticMesh", value = "/Engine/BasicShapes/Cube.Cube" }
+
+[[step]]
+tool = "hf_set_property"
+args = { object = "EvalRock_C", property = "StaticMeshComponent.StaticMesh", value = "/Engine/BasicShapes/Cube.Cube" }
+
 # PLANTED FAULT for diagnosis.hidden_in_game: visible in the editor, hidden when playing.
 [[step]]
 tool = "hf_set_actor_visibility"
