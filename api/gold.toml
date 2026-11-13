@@ -1,0 +1,175 @@
+# Plain-words questions about the Unreal Engine API, with the entries that answer them.
+# Used offline to measure hf_api_lookup retrieval. Questions avoid the answer's own
+# identifiers on purpose: an agent asks "make a copy of an actor", not "DuplicateActor".
+# "a|b" means either entry is a correct answer. "note~text" matches a note whose
+# heading contains text. Answers were checked against the UE 5.8 index.
+
+# -- editor functions --------------------------------------------------------
+[[q]]
+query = "turn a render target into a saved texture asset"
+want = "UKismetRenderingLibrary.RenderTargetCreateStaticTexture2DEditorOnly"
+[[q]]
+query = "save a render target to an image file on disk"
+want = "UKismetRenderingLibrary.ExportRenderTarget"
+[[q]]
+query = "spawn an actor of a given class in the editor level"
+want = "UEditorActorSubsystem.SpawnActorFromClass|UEditorLevelLibrary.SpawnActorFromClass"
+[[q]]
+query = "make a copy of an actor in the level"
+want = "UEditorActorSubsystem.DuplicateActor|UEditorActorSubsystem.DuplicateActors"
+[[q]]
+query = "change the name an actor shows in the outliner"
+want = "AActor.SetActorLabel"
+[[q]]
+query = "list every actor in the current level"
+want = "UEditorActorSubsystem.GetAllLevelActors"
+[[q]]
+query = "write a modified asset to disk"
+want = "UEditorAssetSubsystem.SaveAsset"
+[[q]]
+query = "move an asset to a different folder"
+want = "UEditorAssetSubsystem.RenameAsset"
+[[q]]
+query = "remove an asset from the project"
+want = "UEditorAssetSubsystem.DeleteAsset"
+[[q]]
+query = "set a scalar parameter on a material instance asset"
+want = "UMaterialEditingLibrary.SetMaterialInstanceScalarParameterValue"
+[[q]]
+query = "assign a texture to a material instance parameter"
+want = "UMaterialEditingLibrary.SetMaterialInstanceTextureParameterValue"
+[[q]]
+query = "force a material to rebuild its shaders"
+want = "UMaterialEditingLibrary.RecompileMaterial"
+[[q]]
+query = "compile a blueprint from a script"
+want = "UBlueprintEditorLibrary.CompileBlueprint"
+[[q]]
+query = "add a new variable to a blueprint"
+want = "UBlueprintEditorLibrary.AddMemberVariable|UBlueprintEditorLibrary.AddMemberVariableWithValue"
+[[q]]
+query = "change the parent class of a blueprint"
+want = "UBlueprintEditorLibrary.ReparentBlueprint"
+[[q]]
+query = "set the screen size at which each level of detail switches"
+want = "UStaticMeshEditorSubsystem.SetLodScreenSizes"
+[[q]]
+query = "generate simple collision shapes for a static mesh"
+want = "UStaticMeshEditorSubsystem.AddSimpleCollisions|UStaticMeshEditorSubsystem.AddSimpleCollisionsWithNotification"
+[[q]]
+query = "turn on nanite for a mesh"
+want = "UStaticMeshEditorSubsystem.SetNaniteSettings"
+[[q]]
+query = "import files into the content browser from python"
+want = "UAssetTools.ImportAssetTasks"
+[[q]]
+query = "which assets are selected in the content browser"
+want = "UEditorUtilityLibrary.GetSelectedAssets|UEditorUtilityLibrary.GetSelectedAssetsOfClass"
+[[q]]
+query = "which actors has the user selected in the viewport"
+want = "UEditorActorSubsystem.GetSelectedLevelActors|UEditorLevelLibrary.GetSelectedLevelActors"
+[[q]]
+query = "look through an actor like a camera in the viewport"
+want = "ULevelEditorSubsystem.PilotLevelActor|UEditorLevelLibrary.PilotLevelActor"
+[[q]]
+query = "move the editor viewport camera to a position"
+want = "ULevelEditorSubsystem.SetLevelViewportCameraInfo|UUnrealEditorSubsystem.SetLevelViewportCameraInfo|UEditorLevelLibrary.SetLevelViewportCameraInfo"
+[[q]]
+query = "open a map in the editor"
+want = "ULevelEditorSubsystem.LoadLevel"
+[[q]]
+query = "create an empty map"
+want = "ULevelEditorSubsystem.NewLevel"
+[[q]]
+query = "add a sublevel to the persistent world"
+want = "UEditorLevelUtils.K2_AddLevelToWorld|UEditorLevelUtils.K2_AddLevelToWorldWithTransform"
+[[q]]
+query = "make a different sublevel the one new actors go into"
+want = "ULevelEditorSubsystem.SetCurrentLevelByName|UEditorLevelLibrary.SetCurrentLevelByName"
+[[q]]
+query = "add a track to a level sequence"
+want = "UMovieSceneSequenceExtensions.AddTrack"
+[[q]]
+query = "insert a keyframe on a float curve in sequencer"
+want = "UMovieSceneScriptingFloatChannel.AddKey"
+[[q]]
+query = "set the frame a cinematic starts playing from"
+want = "UMovieSceneSequenceExtensions.SetPlaybackStart"
+[[q]]
+query = "combine several static mesh actors into one mesh"
+want = "UStaticMeshEditorSubsystem.MergeStaticMeshActors|UStaticMeshEditorSubsystem.JoinStaticMeshActors|UEditorLevelLibrary.MergeStaticMeshActors|UEditorLevelLibrary.JoinStaticMeshActors"
+[[q]]
+query = "start simulating the level in the editor"
+want = "ULevelEditorSubsystem.EditorPlaySimulate|UEditorLevelLibrary.EditorPlaySimulate"
+[[q]]
+query = "tag an asset with custom metadata"
+want = "UEditorAssetSubsystem.SetMetadataTag"
+[[q]]
+query = "what other assets reference this asset"
+want = "UEditorAssetSubsystem.FindPackageReferencersForAsset"
+[[q]]
+query = "open an editor utility widget as a tab"
+want = "UEditorUtilitySubsystem.SpawnAndRegisterTab"
+
+# -- gameplay functions ------------------------------------------------------
+[[q]]
+query = "seconds since the game started"
+want = "UKismetSystemLibrary.GetGameTimeInSeconds"
+[[q]]
+query = "cast a ray and get the first thing it hits"
+want = "UKismetSystemLibrary.LineTraceSingle"
+[[q]]
+query = "call a function after a delay"
+want = "UKismetSystemLibrary.K2_SetTimerDelegate"
+[[q]]
+query = "play a sound that is not positioned in 3d"
+want = "UGameplayStatics.PlaySound2D"
+[[q]]
+query = "travel to another map at runtime"
+want = "UGameplayStatics.OpenLevel"
+
+# -- factories, subsystems, settings ----------------------------------------
+[[q]]
+query = "which factory creates a level sequence asset"
+want = "ULevelSequenceFactoryNew"
+[[q]]
+query = "factory for a new material"
+want = "UMaterialFactoryNew"
+[[q]]
+query = "factory that creates a material instance"
+want = "UMaterialInstanceConstantFactoryNew"
+[[q]]
+query = "factory for a new blueprint class"
+want = "UBlueprintFactory"
+[[q]]
+query = "create a data table asset"
+want = "UDataTableFactory"
+[[q]]
+query = "create a niagara particle system asset"
+want = "UNiagaraSystemFactoryNew"
+[[q]]
+query = "editor subsystem for spawning, selecting and destroying level actors"
+want = "UEditorActorSubsystem"
+[[q]]
+query = "project settings page for rendering"
+want = "URendererSettings"
+
+# -- HullForge's verified engine notes ---------------------------------------
+[[q]]
+query = "does comparing two FStrings ignore case"
+want = "note~CASE INSENSITIVE"
+[[q]]
+query = "importing text into a struct leaves the fields I did not set unchanged"
+want = "note~ImportText"
+[[q]]
+query = "unresolved external symbol LNK1120 when calling a class from another module"
+want = "note~not a promise the symbol leaves the DLL"
+[[q]]
+query = "adding a key at a time that already has one creates a duplicate key"
+want = "note~does NOT replace"
+[[q]]
+query = "a LOD function returned nothing, how do I know it worked"
+want = "note~void return is not a success signal"
+[[q]]
+query = "setting an overlay material broke the material slot"
+want = "note~SetMaterialSlotOverlayMaterial"

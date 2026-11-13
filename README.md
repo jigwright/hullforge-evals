@@ -45,7 +45,10 @@ A task file can add its own `[[seed]]` steps to the fixture; the injection suite
 and confirms each task then grades FAIL, so a clean sweep can't come from checks that never fail.
 `scripts/cross_area_oracle.py` does the same for the cross-area suite in both directions: solved, every
 task passes; untouched (`--null`), every task fails. `scripts/search_recall.py` scores the gateway's
-search offline against `search/gold.toml`.
+search offline against `search/gold.toml`, and `scripts/api_recall.py` scores `hf_api_lookup` against
+`api/gold.toml` (the questions used while tuning) or, with `--set heldout`, `api/heldout.toml` (questions tuning
+never saw). It needs a local Unreal install and no editor:
+`uv run --project ../hullforge-mcp python scripts/api_recall.py --set heldout`.
 
 Results: [RESULTS.md](RESULTS.md). What they taught us: [FINDINGS.md](FINDINGS.md).
 

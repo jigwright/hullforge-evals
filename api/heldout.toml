@@ -1,0 +1,94 @@
+# Held-out questions: written before any tuning of hf_api_lookup and never used
+# to tune it. Same format as gold.toml. The headline result comes from this set;
+# gold.toml is the development set the ranking was tuned against.
+
+[[q]]
+query = "set an actor's location and rotation in the editor"
+want = "UEditorActorSubsystem.SetActorTransform"
+[[q]]
+query = "delete an actor from the editor level"
+want = "UEditorActorSubsystem.DestroyActor|UEditorActorSubsystem.DestroyActors"
+[[q]]
+query = "check whether an asset exists at a path"
+want = "UEditorAssetSubsystem.DoesAssetExist|UEditorAssetLibrary.DoesAssetExist"
+[[q]]
+query = "list all assets in a folder"
+want = "UEditorAssetSubsystem.ListAssets|UEditorAssetLibrary.ListAssets"
+[[q]]
+query = "make a duplicate of an asset under a new name"
+want = "UEditorAssetSubsystem.DuplicateAsset|UEditorAssetLibrary.DuplicateAsset"
+[[q]]
+query = "create a folder in the content browser"
+want = "UEditorAssetSubsystem.MakeDirectory|UEditorAssetLibrary.MakeDirectory"
+[[q]]
+query = "replace every reference to one asset with another"
+want = "UEditorAssetSubsystem.ConsolidateAssets|UEditorAssetLibrary.ConsolidateAssets"
+[[q]]
+query = "read a color parameter from a material instance asset"
+want = "UMaterialEditingLibrary.GetMaterialInstanceVectorParameterValue"
+[[q]]
+query = "wire one material node's output into another node's input"
+want = "UMaterialEditingLibrary.ConnectMaterialExpressions"
+[[q]]
+query = "add a node to a material graph"
+want = "UMaterialEditingLibrary.CreateMaterialExpression"
+[[q]]
+query = "how many levels of detail does a static mesh have"
+want = "UStaticMeshEditorSubsystem.GetLodCount"
+[[q]]
+query = "strip all collision from a static mesh"
+want = "UStaticMeshEditorSubsystem.RemoveCollisions"
+[[q]]
+query = "save the level that is open in the editor"
+want = "ULevelEditorSubsystem.SaveCurrentLevel"
+[[q]]
+query = "stop the play in editor session"
+want = "ULevelEditorSubsystem.EditorRequestEndPlay|UEditorLevelLibrary.EditorEndPlay"
+[[q]]
+query = "bind an existing level actor to a level sequence"
+want = "UMovieSceneSequenceExtensions.AddPossessable"
+[[q]]
+query = "change the frame rate a sequence is displayed at"
+want = "UMovieSceneSequenceExtensions.SetDisplayRate"
+[[q]]
+query = "spawn a particle effect at a location during gameplay"
+want = "UNiagaraFunctionLibrary.SpawnSystemAtLocation"
+[[q]]
+query = "find every actor of a class at runtime"
+want = "UGameplayStatics.GetAllActorsOfClass"
+[[q]]
+query = "hurt an actor"
+want = "UGameplayStatics.ApplyDamage"
+[[q]]
+query = "show a debug message on screen"
+want = "UKismetSystemLibrary.PrintString"
+[[q]]
+query = "change a color on a dynamic material at runtime"
+want = "UMaterialInstanceDynamic.SetVectorParameterValue"
+[[q]]
+query = "factory that makes a sound cue"
+want = "USoundCueFactoryNew"
+[[q]]
+query = "create a render target texture asset"
+want = "UTextureRenderTargetFactoryNew"
+[[q]]
+query = "create an animation blueprint"
+want = "UAnimBlueprintFactory"
+[[q]]
+query = "editor subsystem for loading, saving and renaming assets"
+want = "UEditorAssetSubsystem"
+[[q]]
+query = "settings page for enhanced input"
+want = "UEnhancedInputDeveloperSettings|UEnhancedInputEditorSettings|UEnhancedInputEditorProjectSettings"
+[[q]]
+query = "a JSON field read as a string succeeds even when the value is a number"
+want = "note~TryGetStringField"
+[[q]]
+query = "JSON converts a value into a type I did not send"
+want = "note~JSON will convert a value"
+[[q]]
+query = "an empty selection makes a mesh operation apply to the whole mesh"
+want = "note~empty mesh selection"
+[[q]]
+query = "creating a physics asset deleted one that was already there"
+want = "note~CreatePhysicsAsset"

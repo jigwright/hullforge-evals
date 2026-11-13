@@ -1,5 +1,20 @@
 # Results
 
+## API lookup retrieval, 12 Nov 2026
+
+See [finding 11](FINDINGS.md). UE 5.8, 26,164 entries, `scripts/api_recall.py`.
+
+| Set | Questions | Method | recall@1 | recall@5 | MRR@10 | Median ms |
+| --- | ---: | --- | ---: | ---: | ---: | ---: |
+| Dev (`api/gold.toml`) | 54 | BM25 | 0.222 | 0.611 | 0.360 | 1.0 |
+| Dev | 54 | Embedding | 0.315 | 0.500 | 0.398 | 5.2 |
+| Dev | 54 | Hybrid | 0.333 | 0.648 | 0.461 | 5.1 |
+| Held-out (`api/heldout.toml`) | 30 | BM25 | 0.267 | 0.533 | 0.368 | 1.3 |
+| Held-out | 30 | Embedding | 0.367 | 0.567 | 0.434 | 5.0 |
+| Held-out | 30 | Hybrid | 0.400 | 0.500 | 0.451 | 5.6 |
+
+Before tuning, dev hybrid was 0.185 / 0.407 / 0.284.
+
 ## Gateway mode, 11 Nov 2026
 
 See [finding 9](FINDINGS.md) for the design and caveats.

@@ -214,3 +214,66 @@ presets and the full list were removed rather than kept as options.
 Given `/Game/EvalFixture/Materials/M_Sand` instead of the object path `.../M_Sand.M_Sand`, the tool returns
 an empty tag map with no error. An agent then reports confidently that the asset has no metadata. The tool
 should resolve a package path to its asset, or refuse it.
+
+## 11. API lookup: hybrid retrieval finds the right Unreal function in the top 5 half the time on unseen questions (12 Nov 2026)
+
+**Design.** `hf_api_lookup` in hullforge-mcp answers "which engine function or class does this?" without
+an editor open. On first use it scans the headers of the user's own Unreal install (found through the
+Epic launcher's install list) for `BlueprintCallable` and `BlueprintPure` functions with their doc
+comments, plus asset factories, editor and engine subsystems and settings classes, and adds the bundled
+engine API notes. Nothing from Epic ships with the connector; the index is built and cached on the user's
+machine. Search fuses two rankings: BM25 keywords with Unreal synonyms, and `bge-small-en-v1.5`
+embeddings run locally through fastembed.
+
+UE 5.8 gives 26,164 entries: 24,891 functions (16,871 with a doc comment), 680 factories, 282 settings
+classes, 259 subsystems and 52 note sections. The header scan takes about 20 s; embedding everything
+takes 3 to 5 minutes once and is cached. A query takes about 5 ms.
+
+**Method.** Two question sets written in the words an agent would use, not the API's:
+`api/gold.toml` (54 questions, used while tuning) and `api/heldout.toml` (30 questions, written before any
+tuning and scored once at the end). A hit is the expected entry by exact name; where two names are
+equally right (a subsystem function and its older library twin), either counts. Run with
+`scripts/api_recall.py`.
+
+**Dev set**, before and after one round of tuning:
+
+| Version | Method | recall@1 | recall@5 | MRR@10 |
+| --- | --- | ---: | ---: | ---: |
+| First cut | BM25 | 0.130 | 0.389 | 0.224 |
+| First cut | Embedding | 0.204 | 0.463 | 0.298 |
+| First cut | Hybrid | 0.185 | 0.407 | 0.284 |
+| Tuned | BM25 | 0.222 | 0.611 | 0.360 |
+| Tuned | Embedding | 0.315 | 0.500 | 0.398 |
+| Tuned | Hybrid | **0.333** | **0.648** | **0.461** |
+
+The tuning: names split from CamelCase into words before indexing ("Editor Asset Subsystem: Save Asset"),
+a generated one-line description for factories, subsystems and settings (their headers rarely have
+one), a small prior favouring core engine and the editor scripting plugin over other plugins and
+deprecated entries, about 25 Unreal synonyms for keyword search (map to level, ray to trace, delay to
+timer), and fusion weighted towards the embedding ranking.
+
+**Held-out set**, tuned version, scored once:
+
+| Method | recall@1 | recall@5 | MRR@10 |
+| --- | ---: | ---: | ---: |
+| BM25 | 0.267 | 0.533 | 0.368 |
+| Embedding | 0.367 | **0.567** | 0.434 |
+| Hybrid | **0.400** | 0.500 | **0.451** |
+
+**What it means.**
+
+- The honest number is the held-out one: hybrid puts the right answer first 40% of the time and in the
+  top 5 half the time. The dev set's 65% top-5 is partly fitted to those 54 questions.
+- Hybrid is best at rank 1 on both sets, but on the held-out set embeddings alone beat it at top 5. With
+  30 questions that is two questions, within noise. Hybrid stays the default.
+- Many misses are near misses. The deprecated `UEditorLevelLibrary` twin of the wanted subsystem
+  function, or a sibling (`RemoveCollisionsWithNotification` for `RemoveCollisions`), is often in the top
+  3. An agent would get a working answer from those; the score doesn't count them.
+- The clearest real failures: words that mean something else in the API ("map" finds `TMap` helpers,
+  not levels; "particle" finds the old Cascade emitters before Niagara), and plugin graphs crowding out
+  the material editor ("add a node to a material graph" returns Optimus nodes).
+- The synonyms help keyword search only. The embeddings don't know that a map is a level.
+
+**Caveats.** 84 questions in all, written by one person, so the sets share a style. No agent was in the
+loop: this measures retrieval, not whether an agent with the tool finishes tasks faster. That needs a
+task run with and without the tool.
